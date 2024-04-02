@@ -1,0 +1,35 @@
+These are some of the macros I use that I find particulary usefull
+
+[gcode_macro Level_Bed] 
+description: #3 point bed level
+gcode: 
+  M190 S60
+  M109 S220
+  G28
+  BED_SCREWS_ADJUST   
+
+
+[gcode_macro clean_nozzle]             #YOU MAY HAVE TO CHANGE CORDINATED DEPENDING ON HOW THE NOZZLE BRUSH IS MOUNTED
+gcode:
+  {% set wipe_count = 15 %}
+  SAVE_GCODE_STATE NAME=clean_nozzle_state
+  G90
+  G0 Z15 F300
+  {% for wipe in range(wipe_count) %}
+    {% for coordinate in [(22, 139),(22, 126)] %}
+      G0 X{coordinate[0] + 0.5 * wipe} Y{coordinate[1]} Z-.4 F12000
+    {% endfor %}
+  {% endfor %}
+     G0 Z25
+  RESTORE_GCODE_STATE NAME=clean_nozzle_state
+
+
+[gcode_macro PLA]
+gcode:
+  SET_PRESSURE_ADVANCE advance=0.4          #TEST AND SET
+  SET_SURFACE_OFFSET offset=-.198           #SET TO WHAT WORKS BEST FOR YOU
+
+[gcode_macro PETG]
+gcode:
+  SET_PRESSURE_ADVANCE advance=0.8          #TEST AND SET
+  SET_SURFACE_OFFSET offset=-0.02           #SET TO WHAT WORKS BEST FOR YOU
