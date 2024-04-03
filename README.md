@@ -20,7 +20,7 @@ Run an m10 tap through threaded portion to chase threads and remove excess mater
 
 ![IMG_1051](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/45e6fbe9-a96d-431f-a38a-776fcc15c7d0)
 ![IMG_1052](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/8847d7cb-bbff-479d-8e91-416a03626ab0)
-Press in heat sets
+Press in m3 heat sets
 
 ![IMG_1053](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/1bae35b1-cff2-4fc2-91bb-c335bbe49709)
 ![IMG_1054](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/b8401a61-e009-4166-ab47-22b73affa089)
