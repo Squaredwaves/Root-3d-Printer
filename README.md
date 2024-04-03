@@ -35,13 +35,13 @@ Prepare parts cooling fans by cliping the little plastic retainer on the fan and
 I will usually install the right one first but it probobly doesnt matter. They are a tight fit and may not come back out in one piece so make sure its how you want it.
 
 ![IMG_1060](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/747878af-01c5-432d-acda-8bef5673fb93)
-Install Revo Micro hear brake. I find a 10mm m4 bolt through the bottom helps a lot
+Install Revo Micro hear break. I find a 10mm m4 bolt through the bottom helps a lot
 
 ![IMG_1062](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/ce08a653-5b86-432a-98f4-066af11c1ec4)
 Prep heater by CAREFULLY bending strain relief to a 90ish degree angle
 
 ![IMG_1063](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/43416c3a-84a8-4929-8218-8123a310d6e1)
-Attach to heat brake
+Attach to heat break
 
 ![IMG_1064](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/2fe5db2c-ba8d-4465-a2a5-daef898ffae0)
 Press 4 heat sets into back plate and attach to x axis linear rail
