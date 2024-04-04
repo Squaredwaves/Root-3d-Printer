@@ -14,7 +14,7 @@ Hot end assembly
 Clean up any stringing or blobs as best as you can. This was some junk tier cf-petg
 
 ![IMG_1050](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/43130541-2c5e-455c-89b6-d40ae5cb6cac)
-Run an m10 tap through threaded portion to chase threads and remove excess material
+Run an m12x1.5 tap through threaded portion to chase threads and remove excess material
 ![IMG_1049](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/96383bda-fc15-46f5-bfc4-e05a3f0b7fcc)
 
 
@@ -24,7 +24,7 @@ Press in m3 heat sets
 
 ![IMG_1053](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/1bae35b1-cff2-4fc2-91bb-c335bbe49709)
 ![IMG_1054](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/b8401a61-e009-4166-ab47-22b73affa089)
-Install heat brake fan. Top first then bottom should clip in with a little pressure in the corners. Align wire so it doesn't get in the way
+Install heat break fan. Top first then bottom should clip in with a little pressure in the corners. Align wire so it doesn't get in the way
 
 ![IMG_1056](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/78a0490c-6f3e-4f7d-9bd2-24142bcd73a7)
 Prepare parts cooling fans by cliping the little plastic retainer on the fan and pulling the wire (gently) back
