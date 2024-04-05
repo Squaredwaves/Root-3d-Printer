@@ -72,7 +72,7 @@ Install motor with toothed pulley. I used a 2mm allen wrench between the motor b
 
 ![IMG_1079](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/d4921c63-e519-496f-9115-b924af99b1f6)
 ![IMG_1080](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/97db0b00-80cd-4245-8dde-3100486a2eb2)
-Start installing pulleys. For left mount it will be 2 smooth on the inside and one smooth on the bottom one on the top on the outside(the picture is incorect on toothed pulley location) 2 3x5 .5mm shims go between the pulleys. Amazon link - https://www.amazon.com/gp/product/B08ZYLHGC9/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1
+Start installing pulleys. For left mount it will be 2 smooth on the inside and one smooth on the bottom one on the top on the outside(the picture is incorect on toothed pulley location) 2 or 3 3x5 .5mm shims go between the pulleys. Amazon link - https://www.amazon.com/gp/product/B08ZYLHGC9/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1
 
 ![IMG_1084](https://github.com/Squaredwaves/Root-3d-Printer/assets/78972129/3e3122fd-d368-4f6f-9b17-fd9a9ca094f8)
 Install top hat. Bolts should just poke through the top. 2 3mm bolts on either side hold to main body.
