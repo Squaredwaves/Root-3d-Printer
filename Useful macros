@@ -1,35 +1,267 @@
-These are some of the macros I use that I find particulary usefull
-
-[gcode_macro Level_Bed] 
-description: #3 point bed level
-gcode: 
-  M190 S60
-  M109 S220
-  G28
-  BED_SCREWS_ADJUST   
-
-
-[gcode_macro clean_nozzle]             #YOU MAY HAVE TO CHANGE CORDINATED DEPENDING ON HOW THE NOZZLE BRUSH IS MOUNTED
+# Cancel print macro
+[gcode_macro CANCEL_PRINT]
+rename_existing: BASE_CANCEL_PRINT
 gcode:
-  {% set wipe_count = 15 %}
+  M400 ; wait for buffer to clear
+  G92 E0 ; zero the extruder
+  {% if printer[printer.toolhead.extruder].target > 220 %}
+      G1 E-5.0 F3600 ; retract filament PETG
+  {% else %}
+      G1 E-1.0 F3600 ; retract filament PLA
+  {% endif %}
+  TURN_OFF_HEATERS
+  CLEAR_PAUSE
+  #SDCARD_RESET_FILE
+  G91 ; relative positioning
+  G0 Z1.00 X20.0 Y20.0 F20000 ; move nozzle to remove stringing
+  TURN_OFF_HEATERS
+  M107 ; turn off fan
+  G1 Z4 F3000 ; move nozzle up 2mm
+  G90 ; absolute positioning
+  G0 X1 Y120 Z120 F3600 ; park nozzle at rear
+
+[gcode_macro START_PRINT]
+gcode:
+    {% set BED_TEMP = params.BED_TEMP|default(60)|float %}
+    {% set EXTRUDER_TEMP = params.EXTRUDER_TEMP|default(190)|float %}
+    # Heat bed for probing
+    {% if printer.heater_bed.temperature < 50 %}
+    M190 S{BED_TEMP + 10}
+    M190 S{BED_TEMP}
+    {% else %}
+    M190 S{BED_TEMP}
+    {% endif %}
+    # Use absolute coordinates
+    G90
+    # Home the printer
+    G28
+
+    # If you are using QGL:
+    #QUAD_GANTRY_LEVEL
+    #G28 Z
+
+    # If you are using Z-Tilt:
+    #Z_TILT_ADJUST
+
+    # If you are generating a new bed mesh:
+    BED_MESH_CALIBRATE ADAPTIVE=1
+    ## NOTE:    The adaptive meshing feature requires exclude_object     ##
+    ##      and may require 'Label Objects' to be enabled in the slicer  ##
+    ##           To mesh without it just use BED_MESH_CALIBRATE          ##
+
+    # If you are loading an existing mesh:
+    #BED_MESH_PROFILE LOAD=default
+
+    # Move the nozzle near the bed
+    #G1 Z5 F3000
+    # Set and wait for nozzle to reach printing temperature
+    M109 S{EXTRUDER_TEMP}
+    CLEAN_NOZZLE
+    LINE_PURGE
+    # Start printing!
+
+[gcode_macro END_PRINT]
+gcode:
+    # Turn off bed, extruder, and fan
+    M140 S0
+    M104 S0
+    M106 S0
+    # Move nozzle away from print while retracting
+    G91
+    G1 X-2 Y-2 E-3 F300
+    # Raise nozzle by 10mm
+    G1 Z100 F3000
+    G90
+    # Disable steppers
+    M84
+
+[gcode_macro LOAD_FILAMENT]
+description: Helper macro to perform manual filament loading.
+gcode:
+	SAVE_GCODE_STATE NAME=LOAD_FILAMENT_STATE
+	G91                                     #Relative positioning
+	M117 Heating...
+	M109 S{params.TEMP|default(220, true)}  #Heat up hotend to provided temp or 220 as default as that should work OK with most filaments.
+	M117 Loading filament...
+	G0 E400 F1000                           # Load the filament into the hotend area.
+	G4 P1000
+	G0 E50 F200                             # Purge
+	M400
+	TURN_OFF_HEATERS
+	M117 Filament loaded!
+	RESTORE_GCODE_STATE NAME=LOAD_FILAMENT_STATE
+
+[gcode_macro UNLOAD_FILAMENT]
+description: Helper macro to perform manual filament loading.
+gcode:
+	SAVE_GCODE_STATE NAME=UNLOAD_FILAMENT_STATE
+	G91                                     #Relative positioning
+	M117 Heating...
+	M109 S{params.TEMP|default(220, true)}  #Heat up hotend to provided temp or 220 as default as that should work OK with most filaments.
+	M117 Unloading filament...
+    G0 E-475 F1000                           # Load the filament into the hotend area.
+	G4 P1000
+	M400
+	TURN_OFF_HEATERS
+	M117 Filament unloaded!
+	RESTORE_GCODE_STATE NAME=UNLOAD_FILAMENT_STATE
+
+# Home, get position, throw around toolhead, home again.
+# If MCU stepper positions (first line in GET_POSITION) are greater than a full step different (your number of microsteps), then skipping occured.
+# We only measure to a full step to accomodate for endstop variance.
+# Example: TEST_SPEED SPEED=300 ACCEL=5000 ITERATIONS=10
+
+[gcode_macro TEST_SPEED]
+gcode:
+    # Speed
+    {% set speed  = params.SPEED|default(printer.configfile.settings.printer.max_velocity)|int %}
+    # Iterations
+    {% set iterations = params.ITERATIONS|default(5)|int %}
+    # Acceleration
+    {% set accel  = params.ACCEL|default(printer.configfile.settings.printer.max_accel)|int %}
+    # Bounding inset for large pattern (helps prevent slamming the toolhead into the sides after small skips, and helps to account for machines with imperfectly set dimensions)
+    {% set bound = params.BOUND|default(20)|int %}
+    # Size for small pattern box
+    {% set smallpatternsize = SMALLPATTERNSIZE|default(20)|int %}
+    
+    # Large pattern
+        # Max positions, inset by BOUND
+        {% set x_min = printer.toolhead.axis_minimum.x + bound %}
+        {% set x_max = printer.toolhead.axis_maximum.x - bound %}
+        {% set y_min = printer.toolhead.axis_minimum.y + bound %}
+        {% set y_max = printer.toolhead.axis_maximum.y - bound %}
+    
+    # Small pattern at center
+        # Find X/Y center point
+        {% set x_center = (printer.toolhead.axis_minimum.x|float + printer.toolhead.axis_maximum.x|float ) / 2 %}
+        {% set y_center = (printer.toolhead.axis_minimum.y|float + printer.toolhead.axis_maximum.y|float ) / 2 %}
+        
+        # Set small pattern box around center point
+        {% set x_center_min = x_center - (smallpatternsize/2) %}
+        {% set x_center_max = x_center + (smallpatternsize/2) %}
+        {% set y_center_min = y_center - (smallpatternsize/2) %}
+        {% set y_center_max = y_center + (smallpatternsize/2) %}
+
+    # Save current gcode state (absolute/relative, etc)
+    SAVE_GCODE_STATE NAME=TEST_SPEED
+    
+    # Output parameters to g-code terminal
+    { action_respond_info("TEST_SPEED: starting %d iterations at speed %d, accel %d" % (iterations, speed, accel)) }
+    
+    # Home and get position for comparison later:
+        M400 # Finish moves - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/66
+        G28
+        # QGL if not already QGLd (only if QGL section exists in config)
+        {% if printer.configfile.settings.quad_gantry_level %}
+            {% if printer.quad_gantry_level.applied == False %}
+                QUAD_GANTRY_LEVEL
+                G28 Z
+            {% endif %}
+        {% endif %} 
+        # Move 50mm away from max position and home again (to help with hall effect endstop accuracy - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/24)
+        G90
+        G1 X{printer.toolhead.axis_maximum.x-50} Y{printer.toolhead.axis_maximum.y-50} F{30*60}
+        M400 # Finish moves - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/66
+        G28 X Y
+        G0 X{printer.toolhead.axis_minimum.x+1} Y{printer.toolhead.axis_maximum.y-1} F{30*60}
+        G4 P1000 
+        GET_POSITION
+
+    # Go to starting position
+    G0 X{x_min} Y{y_min} Z{bound + 30} F{speed*60}
+
+    # Set new limits
+    SET_VELOCITY_LIMIT VELOCITY={speed} ACCEL={accel} #ACCEL_TO_DECEL={accel / 2}
+
+    {% for i in range(iterations) %}
+        # Large pattern diagonals
+        G0 X{x_min} Y{y_min} F{speed*60}
+        G0 X{x_max} Y{y_max} F{speed*60}
+        G0 X{x_min} Y{y_min} F{speed*60}
+        G0 X{x_max} Y{y_min} F{speed*60}
+        G0 X{x_min} Y{y_max} F{speed*60}
+        G0 X{x_max} Y{y_min} F{speed*60}
+        
+        # Large pattern box
+        G0 X{x_min} Y{y_min} F{speed*60}
+        G0 X{x_min} Y{y_max} F{speed*60}
+        G0 X{x_max} Y{y_max} F{speed*60}
+        G0 X{x_max} Y{y_min} F{speed*60}
+    
+        # Small pattern diagonals
+        G0 X{x_center_min} Y{y_center_min} F{speed*60}
+        G0 X{x_center_max} Y{y_center_max} F{speed*60}
+        G0 X{x_center_min} Y{y_center_min} F{speed*60}
+        G0 X{x_center_max} Y{y_center_min} F{speed*60}
+        G0 X{x_center_min} Y{y_center_max} F{speed*60}
+        G0 X{x_center_max} Y{y_center_min} F{speed*60}
+        
+        # Small patternbox
+        G0 X{x_center_min} Y{y_center_min} F{speed*60}
+        G0 X{x_center_min} Y{y_center_max} F{speed*60}
+        G0 X{x_center_max} Y{y_center_max} F{speed*60}
+        G0 X{x_center_max} Y{y_center_min} F{speed*60}
+    {% endfor %}
+
+    # Restore max speed/accel/accel_to_decel to their configured values
+    SET_VELOCITY_LIMIT VELOCITY={printer.configfile.settings.printer.max_velocity} ACCEL={printer.configfile.settings.printer.max_accel} #ACCEL_TO_DECEL={printer.configfile.settings.printer.max_accel_to_decel} 
+
+    # Re-home and get position again for comparison:
+        M400 # Finish moves - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/66
+        G28 # This is a full G28 to fix an issue with CoreXZ - https://github.com/AndrewEllis93/Print-Tuning-Guide/issues/12
+        # Go to XY home positions (in case your homing override leaves it elsewhere)
+        G90
+        G0 X{printer.toolhead.axis_minimum.x+1} Y{printer.toolhead.axis_maximum.y-1} F{30*60}
+        G4 P1000 
+        GET_POSITION
+
+    # Restore previous gcode state (absolute/relative, etc)
+    RESTORE_GCODE_STATE NAME=TEST_SPEED
+
+
+[gcode_macro clean_nozzle]
+gcode:
+  {% set wipe_count = 20 %}
   SAVE_GCODE_STATE NAME=clean_nozzle_state
   G90
   G0 Z15 F300
   {% for wipe in range(wipe_count) %}
-    {% for coordinate in [(22, 139),(22, 126)] %}
-      G0 X{coordinate[0] + 0.5 * wipe} Y{coordinate[1]} Z-.4 F12000
+    {% for coordinate in [(20, 136),(20, 126)] %}
+      G0 X{coordinate[0] + 0.75 * wipe} Y{coordinate[1]} Z 0 F12000
+    {% endfor %}
+  {% endfor %}
+  {% for wipe in range(wipe_count) %}
+    {% for coordinate in [(32, 136),(32, 126)] %}
+      G0 X{coordinate[0] - 0.85 * wipe} Y{coordinate[1]} Z 0 F12000
     {% endfor %}
   {% endfor %}
      G0 Z25
   RESTORE_GCODE_STATE NAME=clean_nozzle_state
 
-
 [gcode_macro PLA]
 gcode:
-  SET_PRESSURE_ADVANCE advance=0.4          #TEST AND SET
-  SET_SURFACE_OFFSET offset=-.198           #SET TO WHAT WORKS BEST FOR YOU
-
+  SET_PRESSURE_ADVANCE advance=0.23         #TEST AND SET
+  #SET_SURFACE_OFFSET offset=0.0           #SET TO WHAT WORKS BEST FOR YOU
 [gcode_macro PETG]
 gcode:
-  SET_PRESSURE_ADVANCE advance=0.8          #TEST AND SET
-  SET_SURFACE_OFFSET offset=-0.02           #SET TO WHAT WORKS BEST FOR YOU
+  SET_PRESSURE_ADVANCE advance=0.45         #TEST AND SET
+  #SET_SURFACE_OFFSET offset=0.02           #SET TO WHAT WORKS BEST FOR YOU
+
+
+[gcode_macro _HOME_Y]
+gcode:
+    # Home Y
+    G4 P2000
+    G28 Y0
+    G1 Y129 F1200
+    
+    
+[gcode_macro _HOME_X]    
+gcode:
+    # Home X
+   
+    G28 X0
+    G1 X10 F1200
+
+
+  
